@@ -25,9 +25,10 @@ Sửa `js/indicators-custom.js` (đã có sẵn một mẫu `IND.mine` và hư�
 - `js/ctrader.js`: kết nối, đăng nhập, nến M1, tick, footprint
 - `js/chart.js`, `js/candle-style.js`, `js/timezone.js`, `js/symbols.js`: chart, màu nến, múi giờ, chọn mã
 - `js/indicators-*.js`, `js/volume-profile.js`, `js/orderflow-*.js`: indicator
+- `js/orderflow-absorption.js`: Heavy Absorption (tính ngưỡng + vẽ marker); khai báo thông số ở cuối `js/indicators-custom.js` (`IND.hab`)
 - `js/hvn-profile.js`: HVN Profile (tính cụm HVN + vẽ canvas); khai báo thông số ở cuối `js/indicators-custom.js` (`IND.hvn`)
 - `js/drawings-*.js`, `js/mobile.js`: công cụ vẽ và cử chỉ cảm ứng
-- `tests/`: `node tests/footprint.test.js`, `node tests/customtf.test.js`, `node tests/hvn.test.js`
+- `tests/`: `node tests/footprint.test.js`, `node tests/customtf.test.js`, `node tests/hvn.test.js`, `node tests/hab.test.js`
 
 ## HVN Profile (v2)
 
@@ -37,3 +38,26 @@ Thêm ở mục **Indicator** → **HVN Profile** (nhóm Orderflow). Chia lịch
 - **Nhận diện**: "Đỉnh nổi bật" (mặc định) tìm cực đại cục bộ, lọc theo độ nổi bật, tách node kề nhau ở thung lũng; "Theo ngưỡng" là cách cũ.
 - **Chất lượng**: mỗi vùng có % volume và độ mạnh (vùng mạnh đậm hơn); lọc vùng yếu và chu kỳ volume thấp bất thường.
 - **Chạm vùng**: chạm mép / chạm POC / nến đóng cửa vào-vượt vùng; giá nhảy qua vùng (gap) cũng tính; phân loại giữ/phá; vùng dưới giá là hỗ trợ, trên giá là kháng cự; đếm vùng chồng nhau (×N).
+
+## Heavy Absorption v2 (kết hợp HVN Profile)
+
+Thêm ở mục **Indicator** → **Heavy Absorption** (nhóm Orderflow). Tự viết lại theo mô tả công khai của Heavy Absorption (ProfitPro, ATAS), không phải mã gốc. Nếu đã thêm bản v1, hãy xoá và thêm lại để nhận mặc định mới.
+
+**Phát hiện**
+- Print = volume Ask (mua) hoặc Bid (bán) tại một hàng giá trong một nến. Ngưỡng thích nghi tính từ mọi print trong `Lookback` nến, theo hai cách: *trung bình + k·độ lệch chuẩn* (như bản gốc) hoặc *theo log volume* (ổn định hơn vì volume từng mức giá có đuôi dài).
+- Độ nhạy: Thấp / Vừa / Cao hoặc tự đặt hệ số k. Mặc định loại nến đang xét khỏi thống kê để print lớn của chính nó không tự nâng ngưỡng.
+- Nến thiếu tick (độ phủ dưới 60%) bị loại khỏi thống kê và không có marker; cửa sổ phải đủ số print tối thiểu. Có lọc volume tối thiểu và tỉ trọng print trong nến. Bước giá có thể để tự động.
+
+**Hấp thụ thật**
+- Chỉ có lệnh lớn thì chưa đủ, giá còn phải bị chặn: phía mua bị hấp thụ khi đỉnh nến không vượt mép trên cụm quá dung sai, phía bán ở mép dưới (có chế độ chặt hơn yêu cầu đóng cửa phía bị chặn). Cụm mà giá chạy xuyên ngay trong nến bị loại.
+- Các print đủ ngưỡng ở hàng kề nhau gộp thành cụm; marker đặt tại print lớn nhất, volume là tổng cụm.
+- Theo dõi K nến sau marker: giữ được thì **xác nhận** (viền đậm), đang chờ thì vòng đứt nét, đóng cửa (hoặc râu) vượt mức thì **thất bại** (mờ đi). Mức hấp thụ được kẻ sang phải đến khi bị phá.
+- Lưu ý: ẩn thất bại hoặc chỉ hiện xác nhận làm marker xuất hiện/biến mất sau vài nến vì trạng thái chỉ biết khi nến sau đã đóng. Marker nến đang chạy cũng có thể đổi theo từng tick.
+
+**Kết hợp HVN Profile** (bật cả hai indicator)
+- Đối chiếu theo thời gian: marker trong vùng HVN còn hiệu lực (nến chạm vùng vẫn tính) được viền nổi bật, có nhãn vai trò vùng (R kháng cự khi giá tới từ dưới, S hỗ trợ khi từ trên) và POC.
+- Viền liền = đúng vai trò (mua bị hấp thụ tại kháng cự, bán bị hấp thụ tại hỗ trợ), viền đứt = ngược vai trò. Có chế độ chỉ hiện marker trong vùng hoặc chỉ hiện marker đúng vai trò.
+
+**Hiển thị / cảnh báo**: cỡ vòng theo số lần ngưỡng (không đổi khi cuộn) hoặc theo marker lớn nhất đang thấy; chữ là volume, điểm σ hoặc cả hai; cảnh báo khi nến có marker đóng hoặc khi marker được xác nhận.
+
+**Dữ liệu**: dùng tick (footprint) nên tự tải tick khi bật (3 ngày gần nhất). Với CFD là số ước lượng từ chuỗi báo giá bid/ask. Cần khung từ M1 trở lên. Không phải tín hiệu mua/bán độc lập.
