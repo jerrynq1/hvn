@@ -203,3 +203,11 @@ a.sb{text-decoration:none}
 /* Mục Kết nối cTrader */
 #ctCard label.msg{display:block;margin-top:12px}
 #ctCard .kv input,#ctCard .kv select{width:100%}
+
+/* ================= DOM / MBO (orderflow-dom.js) ================= */
+#dom{position:absolute;top:6px;right:6px;bottom:36px;width:var(--domw,250px);z-index:6;display:none;flex-direction:column;overflow:hidden;border-radius:12px;background:var(--card);border:1px solid var(--line);font-variant-numeric:tabular-nums}
+#dom .dh{flex:none;padding:6px 8px;border-bottom:1px solid var(--line);font-size:11px;line-height:1.35;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#dom .dh b{display:block;color:var(--ink);font-size:12px}
+#dom canvas{flex:1 1 0;min-height:0;width:100%;display:block;touch-action:pan-y}
+#chartCard.hasdom #dom{display:flex}
+#chartCard.hasdom #cw{right:calc(12px + var(--domw,250px))}
