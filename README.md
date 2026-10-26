@@ -26,9 +26,10 @@ Sửa `js/indicators-custom.js` (đã có sẵn một mẫu `IND.mine` và hư�
 - `js/chart.js`, `js/candle-style.js`, `js/timezone.js`, `js/symbols.js`: chart, màu nến, múi giờ, chọn mã
 - `js/indicators-*.js`, `js/volume-profile.js`, `js/orderflow-*.js`: indicator
 - `js/orderflow-absorption.js`: Heavy Absorption (tính ngưỡng + vẽ marker); khai báo thông số ở cuối `js/indicators-custom.js` (`IND.hab`)
+- `js/orderflow-dom.js`: DOM / MBO (kênh depth cTrader, bảng bên phải + histogram thanh khoản ở mép phải chart); khai báo thông số ở cuối `js/indicators-custom.js` (`IND.dom`)
 - `js/hvn-profile.js`: HVN Profile (tính cụm HVN + vẽ canvas); khai báo thông số ở cuối `js/indicators-custom.js` (`IND.hvn`)
 - `js/drawings-*.js`, `js/mobile.js`: công cụ vẽ và cử chỉ cảm ứng
-- `tests/`: `node tests/footprint.test.js`, `node tests/customtf.test.js`, `node tests/hvn.test.js`, `node tests/hab.test.js`
+- `tests/`: `node tests/footprint.test.js`, `node tests/customtf.test.js`, `node tests/hvn.test.js`, `node tests/hab.test.js`, `node tests/dom.test.js`
 
 ## HVN Profile (v2)
 
@@ -61,3 +62,14 @@ Thêm ở mục **Indicator** → **Heavy Absorption** (nhóm Orderflow). Tự v
 **Hiển thị / cảnh báo**: cỡ vòng theo số lần ngưỡng (không đổi khi cuộn) hoặc theo marker lớn nhất đang thấy; chữ là volume, điểm σ hoặc cả hai; cảnh báo khi nến có marker đóng hoặc khi marker được xác nhận.
 
 **Dữ liệu**: dùng tick (footprint) nên tự tải tick khi bật (3 ngày gần nhất). Với CFD là số ước lượng từ chuỗi báo giá bid/ask. Cần khung từ M1 trở lên. Không phải tín hiệu mua/bán độc lập.
+
+## DOM / MBO
+
+Thêm ở mục **Indicator** → **DOM / MBO** (nhóm Orderflow). Đăng ký kênh depth của cTrader Open API (`SubscribeDepthQuotes` 2156, nhận `DepthEvent` 2155, huỷ bằng 2158) cho mã đang xem; mỗi báo giá trong sổ có ID riêng nên giữ được từng lệnh (MBO).
+
+- **Bảng DOM bên phải chart**: Bid | Giá | Ask | VP. Hàng chứa best bid / best ask được tô, ×N là số lệnh riêng lẻ ở mức đó, ô nháy khi size tăng (màu Bid) hoặc giảm (màu Ask) trong 1,2 giây gần nhất. Cuộn bằng bánh xe, nhấp đúp để căn giữa lại. Cột VP là volume đã khớp theo giá (từ tick footprint, nên bật nó sẽ tự tải tick).
+- **Histogram thanh khoản ở mép phải vùng vẽ**: thanh ngang thẳng hàng với trục giá, đỏ là Ask, xanh là Bid, mỗi lệnh là một đoạn riêng (MBO). Mức có size vượt trung bình + k·độ lệch chuẩn của cả sổ được viền nổi, ghi nhãn "size @ giá" và kẻ đường ngang sang trái.
+- **Đơn vị**: lot = size / lotSize của mã (size cTrader tính theo 1/100 đơn vị). Có thể đổi sang đơn vị hợp đồng hoặc số thô.
+- **Heatmap lịch sử (tuỳ chọn, mặc định tắt)**: chụp sổ lệnh mỗi giây, tô nền chart theo size từng mức giá theo thời gian (đậm = dày; xanh Bid, đỏ Ask), kiểu Bookmap. Giữ 2–240 phút gần nhất trong bộ nhớ, đổi mã hoặc đổi mức gộp giá thì xoá lịch sử.
+
+Giới hạn: với forex/CFD đây là thanh khoản tổng hợp do broker báo, không phải sổ lệnh tập trung như CME; giảm size không phân biệt được rút lệnh hay bị khớp; không có lịch sử depth từ trước (heatmap chỉ có từ lúc bật indicator và mất khi tải lại trang). Một số broker không bật depth, khi đó bảng báo lỗi đăng ký.
