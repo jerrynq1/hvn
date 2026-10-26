@@ -61,6 +61,7 @@ function ctMsg(ev){
     return;
   }
   if(t===2131)ctSpot(p);
+  else if(t===2155){if(typeof domFeed==="function")domFeed(p)}   // DepthEvent (sổ lệnh L2 / MBO), xem orderflow-dom.js
   else if(t===2147||t===2164){CT.fatal="CT_TOKEN";status("cTrader: "+why(new Error(CT.fatal)),"bad")}   // token bị thu hồi / tài khoản bị ngắt
   else if(t===2142||t===50)console.warn("cTrader lỗi:",p.errorCode,p.description);
 }
@@ -123,9 +124,9 @@ async function ctUseSymbol(name){
   const L=CT.symbols||[],s=ctFind(name);
   if(!s)throw new Error("SYMBOL: broker không có mã '"+name+"' (đã thử: "+((typeof symCands==="function"?symCands(name):[normSym(name)]).join(", "))+")");
   const id=+s.symbolId;
-  let digits=5;
-  try{const r=await ctSend(2116,{ctidTraderAccountId:CT.acc,symbolId:[id]});digits=+((r.symbol||[])[0]||{}).digits||5}catch{}
-  CT.sym={id,name:s.symbolName,digits,req:name};CT.bid=CT.ask=0;CT.liveBar=null;CT.liveU=0;CT.tkBar=null;CT.tbAt=0;CT.barDirty=CT.quoteDirty=false;
+  let digits=5,lotSize=0;
+  try{const r=await ctSend(2116,{ctidTraderAccountId:CT.acc,symbolId:[id]}),x=(r.symbol||[])[0]||{};digits=+x.digits||5;lotSize=+x.lotSize||0}catch{}
+  CT.sym={id,name:s.symbolName,digits,lotSize,req:name};CT.bid=CT.ask=0;CT.liveBar=null;CT.liveU=0;CT.tkBar=null;CT.tbAt=0;CT.barDirty=CT.quoteDirty=false;
   ctFpReset();
   if(!CT.subs.has(id)){
     await ctSend(2127,{ctidTraderAccountId:CT.acc,symbolId:[id],subscribeToSpotTimestamp:true}).catch(e=>{if(!/ALREADY/i.test(e.message))throw e});

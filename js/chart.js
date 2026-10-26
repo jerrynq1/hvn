@@ -189,6 +189,7 @@ function poll(){
   }catch(e){chErr("applyLive",e)}
   try{ctFpIdle()}catch(e){chErr("ctFpIdle",e)}
   try{if(FPL.dirty){FPL.dirty=false;ctFpFlush();FPV++;FPLV++;dirty=true}}catch(e){chErr("ctFpFlush",e)}
+  try{if(typeof domTick==="function")domTick()}catch(e){chErr("dom",e)}
   try{chartWatch()}catch(e){chErr("chartWatch",e)}
 }
 /* Có giá bid mới (CT.dirtyAt) mà nến không được áp trong > 6s => chart đang đứng. Khôi phục theo cấp, mỗi cấp chỉ chạy 1 lần cho tới khi chart chạy lại. */
