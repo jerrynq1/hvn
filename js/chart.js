@@ -217,7 +217,7 @@ function setTf(s){
   tfNote();
 }
 function tfNote(){   // Footprint / Big Trade / Statistic cần dữ liệu theo phút
-  if(!SUB())return;try{if(fpOn()||btOn()||stOn())status("Footprint / Big Trade / Statistic cần khung từ M1 trở lên","bad")}catch{}
+  if(!SUB())return;try{if(fpOn()||btOn()||stOn()||haOn())status("Footprint / Big Trade / Statistic / Heavy Absorption cần khung từ M1 trở lên","bad")}catch{}
 }
 function delTf(s){CTF=CTF.filter(x=>x!==s);saveCtf();if(C.tf===s)setTf(900);else buildTfs()}
 $("tfs").onclick=e=>{

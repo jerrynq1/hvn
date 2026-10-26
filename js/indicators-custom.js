@@ -60,3 +60,43 @@ IND.hvn={
   c:["#35b6ff","#ffb02e","#98a2d8","#b388ff","#26c882","#ff5c8a"],L:["Vùng HVN (trung tính)","POC","Histogram","Profile đang chạy","Hỗ trợ (dưới giá)","Kháng cự (trên giá)"],
   lab:p=>tfName(+p.tf),f:()=>[]
 };
+
+/* ===== Heavy Absorption v2: lệnh lớn bị thanh khoản thụ động hấp thụ (giá bị chặn), ngưỡng thích nghi theo thống kê =====
+   Kiểu "of": phần tính + vẽ nằm ở js/orderflow-absorption.js. Dùng tick (footprint) nên tự tải tick khi bật. */
+const HAB_ON=(k,v)=>p=>p[k]===v,HAB_NOT=(k,v)=>p=>p[k]!==v;
+IND.hab={
+  n:"Heavy Absorption",t:"of",ver:2,
+  d:"Tìm các lệnh mua/bán lớn bất thường tại một mức giá trong nến (volume Ask hoặc Bid vượt ngưỡng thống kê thích nghi trong lookback) và kiểm tra giá có thực sự bị chặn hay không: phía mua bị hấp thụ khi giá không đi tiếp qua mép trên cụm, phía bán ở mép dưới. Sau đó theo dõi vài nến để xác nhận hoặc đánh dấu thất bại. Mỗi marker là một vòng tròn, số bên trong là volume. Kết hợp HVN Profile: viền marker nằm trong vùng HVN còn hiệu lực, biết vùng là hỗ trợ hay kháng cự và marker có đúng vai trò không. Với CFD là số ước lượng từ chuỗi báo giá bid/ask.",
+  p:[["step","Bước giá (0 = tự động)",0,"n",{g:"Dữ liệu",mn:1,min:0,step:0.01,tt:"Gộp volume theo hàng giá có bề rộng này. 0 = tự động theo trung vị biên độ nến chia số hàng bên dưới (làm tròn 1/2/5)."}],
+     ["rows","Số hàng giá mỗi nến (khi tự động)",12,"i",{min:3,max:60,on:p=>!(+p.step>0),tt:"Nhiều hàng thì print nhỏ hơn và chi tiết hơn, ngưỡng cũng thấp hơn. 10 đến 20 là hợp lý."}],
+     ["cov","Bỏ nến thiếu tick (độ phủ tối thiểu %)",60,"i",{min:0,max:100,tt:"Nến có ít hơn chừng này % số phút có dữ liệu tick (lịch sử tick bị cắt, mới bật) thì không tham gia thống kê và không có marker, tránh ngưỡng sai vì thiếu dữ liệu."}],
+     ["sens","Độ nhạy","normal","s",{g:"Ngưỡng lệnh lớn",mn:1,o:[["low","Thấp (ít marker, mạnh)"],["normal","Vừa"],["high","Cao (nhiều marker)"],["custom","Tuỳ chỉnh hệ số"]],tt:"Thấp ≈ k 3, Vừa ≈ 2, Cao ≈ 1.5 (chế độ log: 3 / 2.5 / 2)."}],
+     ["sdk","Hệ số k",2,"n",{mn:1,min:0.5,max:6,step:0.1,on:HAB_ON("sens","custom"),tt:"Ngưỡng = trung bình + k × độ lệch chuẩn. Cao hơn thì ít marker hơn và mạnh hơn."}],
+     ["dist","Cách tính ngưỡng","sd","s",{o:[["sd","Trung bình + k·độ lệch chuẩn (như ATAS)"],["log","Theo log volume (ổn định hơn)"]],hp:["Hai cách tính ngưỡng","Trung bình + k·độ lệch chuẩn: đúng mô tả của Heavy Absorption gốc. Volume từng mức giá lệch phải và đuôi dài nên vài print cực lớn kéo độ lệch chuẩn lên, làm các print lớn vừa bị bỏ sót.","Theo log volume: tính trung bình và độ lệch chuẩn trên ln(volume) rồi đổi ngược lại. Phù hợp phân phối đuôi dài, ngưỡng ổn định hơn qua các phiên, bắt được cả lệnh lớn vừa."]}],
+     ["lb","Lookback (số nến)",100,"i",{mn:1,min:5,max:1000,tt:"Cửa sổ thống kê: ngưỡng tính từ mọi print của chừng này nến gần nhất."}],
+     ["minn","Số print tối thiểu trong cửa sổ",30,"i",{min:5,max:5000,tt:"Cửa sổ có ít print hơn mức này thì chưa tính ngưỡng (đầu lịch sử hoặc mới tải tick)."}],
+     ["excl","Không tính nến đang xét vào thống kê",true,"b",{tt:"Print lớn của chính nến đang xét không tự nâng trung bình và độ lệch chuẩn, nên nhạy hơn và đúng hơn. Tắt để giống bản gốc (cửa sổ gồm cả nến hiện tại)."}],
+     ["minv","Volume tối thiểu (0 = tắt)",0,"i",{min:0,tt:"Ẩn cụm có tổng volume nhỏ hơn mức này (mỗi print cũng phải đạt mức này)."}],
+     ["minp","Print tối thiểu (% volume nến, 0 = tắt)",0,"n",{min:0,max:100,step:0.5,tt:"Print phải chiếm ít nhất chừng này % tổng volume của nến, loại các print lớn nhưng chỉ là phần nhỏ của nến volume rất cao."}],
+     ["gap","Gộp hàng kề nhau (số hàng trống cho phép)",1,"i",{g:"Hấp thụ",min:0,max:10,tt:"Các print đủ ngưỡng ở hàng kề nhau (cách nhau tối đa chừng này hàng trống) gộp thành một cụm: một marker, volume là tổng cụm."}],
+     ["maxm","Tối đa marker mỗi phía mỗi nến",1,"i",{min:1,max:5,tt:"Giữ các cụm có tổng volume lớn nhất."}],
+     ["rej","Điều kiện giá bị chặn trong nến","ext","s",{mn:1,o:[["none","Không kiểm tra (chỉ lệnh lớn)"],["ext","Giá không đi quá mức hấp thụ"],["close","Không đi quá và đóng cửa phía bị chặn"]],hp:["Giá bị chặn là gì?","Hấp thụ nghĩa là lệnh lớn đánh vào nhưng giá không đi tiếp. Phía mua bị hấp thụ: đỉnh nến không vượt mép trên của cụm quá số hàng cho phép. Phía bán bị hấp thụ: đáy nến không thấp hơn mép dưới của cụm quá số hàng cho phép.","Chế độ chặt hơn còn yêu cầu nến đóng cửa không vượt mép cụm.","Cụm mà giá chạy xuyên qua ngay trong nến (không bị chặn) bị loại. Chọn \"Không kiểm tra\" để chỉ phát hiện lệnh lớn như bản gốc."]}],
+     ["ext","Dung sai vượt mức (hàng)",2,"i",{min:0,max:20,on:HAB_NOT("rej","none"),tt:"Giá được phép vượt mép cụm tối đa chừng này hàng giá vẫn tính là bị chặn. Cũng dùng khi xét các nến xác nhận."}],
+     ["conf","Số nến xác nhận",3,"i",{mn:1,min:0,max:30,tt:"Theo dõi chừng này nến sau marker: giá vượt mức hấp thụ thì thất bại, giữ được hết thì xác nhận, chưa đủ nến thì đang chờ (vòng đứt nét). 0 = không xác nhận."}],
+     ["cm","Thất bại khi","close","s",{o:[["close","Nến đóng cửa vượt mức"],["wick","Râu nến vượt mức"]],tt:"Đóng cửa: bỏ qua râu nến quét qua rồi quay lại. Râu: chặt hơn, mọi lần chạm vượt đều tính."}],
+     ["sts","Hiển thị theo trạng thái","all","s",{o:[["all","Tất cả (thất bại mờ đi)"],["nofail","Ẩn marker thất bại"],["ok","Chỉ marker đã xác nhận"]],tt:"Lưu ý: ẩn thất bại hoặc chỉ hiện xác nhận làm marker xuất hiện hoặc biến mất sau vài nến, vì trạng thái chỉ biết khi các nến sau đã đóng."}],
+     ["hvn","Kết hợp HVN Profile","mark","s",{g:"Kết hợp HVN Profile",o:[["off","Không dùng"],["mark","Viền nổi bật khi trong vùng HVN"],["only","Chỉ hiện khi trong vùng HVN"],["align","Chỉ hiện khi trong vùng HVN và đúng vai trò"]],hp:["Kết hợp với HVN Profile","Cần bật cả HVN Profile trên chart. Vùng HVN còn hiệu lực là vùng của chu kỳ đã kết thúc mà giá chưa dùng hết (nến chạm vùng vẫn tính vì đó là phản ứng).","Vai trò theo hướng giá tới: nến mở dưới giữa vùng thì vùng là kháng cự (R), mở trên thì là hỗ trợ (S). Đúng vai trò (viền liền): mua bị hấp thụ tại kháng cự hoặc bán bị hấp thụ tại hỗ trợ. Ngược vai trò: viền đứt nét.","Nhãn POC xuất hiện khi POC của vùng nằm sát cụm. Nếu HVN Profile đang tắt thì mục này không có tác dụng."]}],
+     ["htol","Dung sai quanh vùng HVN (hàng)",1,"i",{min:0,max:20,on:HAB_NOT("hvn","off"),tt:"Cụm chỉ cần nằm sát vùng trong chừng này hàng giá là tính là trong vùng."}],
+     ["sz","Cỡ vòng tròn theo","thr","s",{g:"Hiển thị",o:[["thr","Số lần ngưỡng (ổn định khi cuộn/zoom)"],["vis","Marker lớn nhất đang hiển thị (như ATAS)"]],tt:"Theo ngưỡng: cỡ phụ thuộc volume so với ngưỡng của nến đó nên không đổi khi cuộn chart. Theo marker lớn nhất: cỡ co giãn theo các marker đang nhìn thấy."}],
+     ["cap","Cỡ lớn nhất khi volume gấp (lần ngưỡng)",5,"n",{min:1.5,max:50,step:0.5,on:HAB_ON("sz","thr")}],
+     ["dmin","Đường kính nhỏ nhất",14,"i",{min:6,max:80}],["dmax","Đường kính lớn nhất",44,"i",{min:10,max:160}],
+     ["op","Độ mờ",0.55,"n",{min:0.1,max:1,step:0.05}],["hol","Rỗng ruột",false,"b"],
+     ["txt","Hiện số volume",true,"b"],
+     ["tm","Nội dung chữ","vol","s",{o:[["vol","Volume"],["z","Điểm σ (độ mạnh thống kê)"],["both","Volume và σ"]],tt:"σ = print lớn nhất của cụm cách trung bình bao nhiêu độ lệch chuẩn (theo cách tính ngưỡng đang chọn)."}],
+     ["tsz","Cỡ chữ",11,"i",{min:7,max:20}],
+     ["lvl","Kẻ mức hấp thụ sang phải",true,"b",{tt:"Đường ngang từ marker đến khi giá phá mức (thất bại) hoặc hết số nến tối đa. Có thể dùng làm hỗ trợ/kháng cự ngắn hạn."}],
+     ["len","Kéo dài tối đa (nến)",20,"i",{min:1,max:300,on:p=>p.lvl}],
+     ["live","Hiện marker nến đang chạy",true,"b",{tt:"Nến đang chạy chưa đóng nên marker có thể đổi hoặc biến mất theo từng tick (vòng đứt nét = đang chờ)."}],
+     ["alm","Cảnh báo","off","s",{g:"Cảnh báo",o:[["off","Tắt"],["bar","Khi nến có marker đóng"],["ok","Khi marker được xác nhận"]],tt:"Hiện thông báo trên thanh trạng thái và phát tiếng bíp. Lần mở đầu chỉ ghi nhớ marker cũ, không báo dồn."}]],
+  c:["#26c882","#ff5c8a","#ffffff","#ffb02e"],L:["Bull (lệnh mua / Ask)","Bear (lệnh bán / Bid)","Màu chữ","Viền vùng HVN"],lab:p=>(p.sens==="custom"?p.sdk:p.sens==="low"?"thấp":p.sens==="high"?"cao":"vừa")+"/"+p.lb,f:()=>[]
+};

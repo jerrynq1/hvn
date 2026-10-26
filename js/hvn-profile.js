@@ -115,6 +115,8 @@ const hvnOut=(z,b)=>z.sd>0?(b.close>z.zt?"b":"h"):z.sd<0?(b.close<z.zb?"b":"h"):
 /* ===== vẽ ===== */
 const hvnOn=()=>ACT.find(x=>x.key==="hvn"&&isOn(x));
 const HVC=new Map();
+const HVZ=[];                                   // vùng HVN của các chu kỳ đã đóng: {zb,zt,pp,t1,te} (giá, POC, giờ bắt đầu hiệu lực, giờ bị dùng hết hoặc Infinity), theo THỜI GIAN nên không phụ thuộc vùng nhìn thấy; Heavy Absorption đối chiếu
+
 function hvnGet(Q,len,t0,tick,fp,ver){
   const key=[C.sym,len,Q.rows,Q.meth,Q.thr,Q.prom,Q.smooth,Q.gapr,Q.minr,Q.mins,Q.src,t0].join("|"),t1=t0+len,N=m1.length,lo=hvnLB(m1,t0),hi=hvnLB(m1,t1),live=hi>=N;
   const sig=(hi-lo)+"|"+tick+"|"+(fp?ver:"")+(live&&N?"|"+m1[N-1][5]+"|"+m1[N-1][4]:""),c=HVC.get(key);if(c&&c.sig===sig)return c.E;
@@ -141,6 +143,7 @@ function hvnAlert(z){
   try{status("HVN "+(z.sd>0?"kháng cự":z.sd<0?"hỗ trợ":"")+": giá chạm vùng "+z.zb.toFixed(pd())+" – "+z.zt.toFixed(pd()),"ok")}catch{}
   try{const A=new (window.AudioContext||window.webkitAudioContext)(),o=A.createOscillator(),g=A.createGain();o.frequency.value=880;g.gain.value=.05;o.connect(g);g.connect(A.destination);o.start();o.stop(A.currentTime+.15)}catch{}}
 function drawHVN(w,h){
+  HVZ.length=0;
   const a=hvnOn();if(!a||!agg.length||!m1.length)return;
   const Q=Object.assign(pdef(IND.hvn),a.p),len=Math.max(60,+Q.tf||3600),N=agg.length,lastT=m1[m1.length-1][0],tick=vpTick(),lw=a.w||1.5,last=agg[N-1].st;
   const fp=Q.src==="auto"&&typeof FPM!=="undefined"&&FPM.size>0?(t=>FPM.get(t)):null,ver=fp?FPH+"|"+FPLV:"";
@@ -163,6 +166,7 @@ function drawHVN(w,h){
         if(tc!=null){touched=true;xe=ts.logicalToCoordinate(s2l(tc));if(xe==null)xe=x1;
           if(!z.al){z.al=true;if(Q.alert&&tc>=last)hvnAlert(z)}}
         else xe=w;
+        HVZ.push({zb:z.zb,zt:z.zt,pp:z.pp,t1:E.t1,te:tc!=null?tc:Infinity});
         if(touched&&!Q.shwt)continue;
       }
       if(xe<0)continue;
