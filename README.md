@@ -73,3 +73,7 @@ Thêm ở mục **Indicator** → **DOM / MBO** (nhóm Orderflow). Đăng ký k�
 - **Heatmap lịch sử (tuỳ chọn, mặc định tắt)**: chụp sổ lệnh mỗi giây, tô nền chart theo size từng mức giá theo thời gian (đậm = dày; xanh Bid, đỏ Ask), kiểu Bookmap. Giữ 2–240 phút gần nhất trong bộ nhớ, đổi mã hoặc đổi mức gộp giá thì xoá lịch sử.
 
 Giới hạn: với forex/CFD đây là thanh khoản tổng hợp do broker báo, không phải sổ lệnh tập trung như CME; giảm size không phân biệt được rút lệnh hay bị khớp; không có lịch sử depth từ trước (heatmap chỉ có từ lúc bật indicator và mất khi tải lại trang). Một số broker không bật depth, khi đó bảng báo lỗi đăng ký.
+
+## Bar Replay (manual backtesting)
+
+The chart view includes a Replay button and a Bar Replay panel. Replay uses the historical candles already loaded into the chart and provides play/pause, one-bar back/forward, jump to first/last loaded bar, playback speed, a draggable timeline, date/time jump, and click-on-chart selection. While replay is active, the main candlestick/volume chart and indicator calculations are limited to candles up to the selected replay index to reduce future-bar leakage. The browser continues receiving live data in the background; exit Replay to return to the latest chart. Historical range is limited to data actually loaded from cTrader, so connect cTrader and load/scroll historical candles before selecting an older period.
