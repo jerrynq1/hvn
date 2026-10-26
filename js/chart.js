@@ -133,10 +133,11 @@ function rebuild(fit){
   agg=[];let lastT=-1;
   for(const b of raw){b.time=disp(b.st);if(b.time>lastT){agg.push(b);lastT=b.time}}
   applyPrec();
-  cs.setData(agg);
-  vs.setData(agg.map(c=>({time:c.time,value:c.v,color:vcol(c.open,c.close)})));
+  const replayCut=window.REPLAY&&REPLAY.active?agg.slice(0,REPLAY.index+1):agg;
+  cs.setData(replayCut);
+  vs.setData(replayCut.map(c=>({time:c.time,value:c.v,color:vcol(c.open,c.close)})));
   if(fit)chart.timeScale().scrollToRealTime();   // đổi khung giờ: về nến mới nhất (dữ liệu cũ hơn tự tải khi kéo sang trái)
-  renderInd();
+  if(window.REPLAY&&REPLAY.active)REPLAY.renderIndicators();else renderInd();
 }
 function applyLive(b,A){
   A=A||m1;const last=A[A.length-1];
@@ -146,6 +147,7 @@ function applyLive(b,A){
   if(o===undefined)return;
   const bar={st:k,time:disp(k),open:o,high:h,low:l,close:c,v},a=agg[agg.length-1];
   if(a&&a.st===k)agg[agg.length-1]=bar;else if(!a||bar.time>a.time)agg.push(bar);else{if(Date.now()-cuAt>15000)catchUp();return}
+  if(window.REPLAY&&REPLAY.active){try{REPLAY.refreshBounds()}catch{};return}
   try{cs.update(bar);vs.update({time:bar.time,value:v,color:vcol(o,c)})}
   catch(e){chErr("cs.update",e);try{rebuild(false)}catch(x){chErr("rebuild",x)}return}   // series lệch thứ tự thời gian...: dựng lại từ m1
   CHW.applied=Date.now();
