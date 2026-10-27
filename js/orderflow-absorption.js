@@ -92,7 +92,7 @@ function haBarOf(c,step){
   const last=agg.length&&c===agg[agg.length-1],key=[step,FPH,last?FPLV:0].join("|");
   if(c._hk===key&&fpSigOk(c,"_hs",FPM))return c._hl;
   fpSigSet(c,"_hs",FPM);const mins=[];
-  for(let t=c.st;t<c.st+C.tf;t+=60)mins.push(FPM.get(t));
+  for(let t=c.st;t<c.st+C.tf&&t<RPLIM();t+=60)mins.push(FPM.get(t));
   const a0=hvnLB(m1,c.st),a1=hvnLB(m1,c.st+C.tf);let nn=0,ok=0;
   for(let i=a0;i<a1;i++)if(m1[i][5]>0){nn++;if(FPM.has(m1[i][0]))ok++}
   const b=haBar(mins,step);b.cov=nn?ok/nn*100:(b.n?100:0);

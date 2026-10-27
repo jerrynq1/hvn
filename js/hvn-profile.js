@@ -134,6 +134,7 @@ function hvnGet(Q,len,t0,tick,fp,ver){
 function hvnTouch(z,t1,grace,mode){
   const sg=agg[0].st+"|"+C.tf+"|"+C.sym+"|"+grace+"|"+mode;
   if(z.sg!==sg){z.sg=sg;z.i=-1;z.tc=null;z.out=""}
+  if(z.tc!=null&&agg.length&&z.tc>agg[agg.length-1].st){z.tc=null;z.out="";z.al=false}   // replay lùi về trước nến đã chạm: vùng chưa bị dùng hết
   if(z.tc!=null)return z.tc;
   if(z.i<0){let lo=0,hi=agg.length;while(lo<hi){const k=(lo+hi)>>1;agg[k].st<t1?lo=k+1:hi=k}z.i=lo+Math.max(0,Math.round(grace))}
   const lim=mode==="close"?agg.length-1:agg.length;
