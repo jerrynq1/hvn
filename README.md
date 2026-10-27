@@ -29,9 +29,11 @@ Sửa `js/indicators-custom.js` (đã có sẵn một mẫu `IND.mine` và hư�
 - `js/orderflow-dom.js`: DOM / MBO (kênh depth cTrader, bảng bên phải + histogram thanh khoản ở mép phải chart); khai báo thông số ở cuối `js/indicators-custom.js` (`IND.dom`)
 - `js/hvn-profile.js`: HVN Profile (tính cụm HVN + vẽ canvas); khai báo thông số ở cuối `js/indicators-custom.js` (`IND.hvn`)
 - `js/killzones.js`: Killzones & Pivots (tính phiên/pivot/level/D-W-M + vẽ canvas + bảng thống kê); khai báo thông số ở cuối `js/indicators-custom.js` (`IND.kz`)
+- `js/goldbach.js`: Goldbach Levels (tính PO3 + level + vẽ canvas); khai báo thông số ở cuối `js/indicators-custom.js` (`IND.gb`)
+- `js/qt.js`: Quarterly Theory (tính chu kỳ A-M-D-X + vẽ thanh các làn); khai báo thông số ở cuối `js/indicators-custom.js` (`IND.qt`)
 - `js/replay.js`: Replay để backtest (thanh điều khiển nổi, cắt/nối lại mảng `m1`); `RP` và `RPLIM()` khai báo ở đầu `js/chart.js`
 - `js/drawings-*.js`, `js/mobile.js`: công cụ vẽ và cử chỉ cảm ứng
-- `tests/`: `node tests/footprint.test.js`, `node tests/customtf.test.js`, `node tests/hvn.test.js`, `node tests/hab.test.js`, `node tests/dom.test.js`, `node tests/replay.test.js`, `node tests/killzones.test.js`
+- `tests/`: `node tests/footprint.test.js`, `node tests/customtf.test.js`, `node tests/hvn.test.js`, `node tests/hab.test.js`, `node tests/dom.test.js`, `node tests/replay.test.js`, `node tests/killzones.test.js`, `node tests/goldbach.test.js`, `node tests/qt.test.js`
 
 ## Replay (backtest)
 
@@ -107,3 +109,26 @@ Thêm ở mục **Indicator** → **Killzones & Pivots** (nhóm Orderflow). Port
 - **Cutoff** (tuỳ chọn): pivot, midpoint, đường giá mở cửa và range level ngừng kéo dài ở giờ này; pivot bị phá lần đầu sau giờ cắt tính là trượt.
 
 Khác bản Pine: tooltip trên nhãn trên chart được thay bằng tooltip của bảng; không có `alert()` của TradingView nên cảnh báo hiện ở thanh trạng thái kèm tiếng bíp. Khi replay, indicator chỉ thấy dữ liệu tới điểm đang xem. Hộp thoại cài đặt có thêm ô nhập chữ (`t`) và nhiều dòng (`ta`) cho các thông số dạng văn bản.
+
+## Goldbach Levels (Trifecta)
+
+Thêm ở mục **Indicator** → **Goldbach Levels (Trifecta)** (nhóm Orderflow). Port từ Pine Script "Goldbach Trifecta Style" (MPL-2.0) sang JS cho chart này, vẽ lên canvas cùng lớp với Killzones.
+
+- **PO3 dealing range**: chọn PO3 (3, 9, 27, 81 ... 531441); giá được nhân **Decimate** rồi áp lưới PO3. Range chứa giá được vẽ đủ level `[03] [11] [17] [23] [29] [35] [41] [47] [50] [53] [59] [65] [71] [77] [83] [89] [97]` cùng High/Low `[81 L]` `[81 H]`; **Số range mở rộng** vẽ thêm các range phía trên và dưới (0 đến 5).
+- **Màu theo nhóm**: Liquidity (03, 11, 89, 97) xanh lá, GIP (17, 83) cam, Flow (23-35, 65-77) xanh dương, Rebalance (41-59) hồng. Vùng tô OB `[03-11]/[89-97]`, LV/BR `[23-35]/[65-77]`, EQ `[41-59]` bật/tắt riêng.
+- **Fractal Fib**: vẽ range con (PO3 / 3) chứa giá, có đủ level riêng. **Level giữa** thêm đường chấm giữa mỗi cặp level.
+- **Mini Map**: cột range thu nhỏ bên phải nến cuối (hoặc ghim mép trái vùng đang xem), kèm đường giá.
+- **PO3 tự động**: bật rồi chọn PO3 cho từng khung giờ (M1, M3-M9, M15-M30, H1, H4, Ngày, Tuần, Tháng, Quý, Năm).
+- **Cơ bản**: Dịch range (0.5 = nửa range), Dùng giá lịch sử, Cập nhật mỗi tick (tắt = chỉ căn lại khi nến đóng).
+
+Khác bản Pine: **Decimate = 0 (mặc định) là tự đoán** theo mã (Forex 10000, cặp JPY 100, vàng/chỉ số/crypto 1), nhập số khác 0 để tự đặt. Nhãn là viên thuốc theo màu nhóm, nhãn đè nhau được lược bớt (ưu tiên High/Low rồi EQ), màu theo theme sáng/tối. Giá nguồn là nến cuối khi đang replay, nên Goldbach chạy đúng trong backtest.
+
+## Quarterly Theory [QT]
+
+Thêm ở mục **Indicator** → **Quarterly Theory [QT]** (nhóm Orderflow). Port từ Pine Script "Quarterly Theory [QT]" (MPL-2.0).
+
+- Mỗi chu kỳ chia 4 phần **A** (Accumulation), **M** (Manipulation), **D** (Distribution), **X** (Reversal / Continuation): **Năm** (4 quý), **Tháng** (4 tuần tính từ thứ Hai đầu tiên), **Tuần** (Thứ 2 = A đến Thứ 5 = X), **Ngày** (4 khối 6 giờ, bắt đầu 18:00 New York), **90 phút** (16 ô mỗi ngày), **22.5 phút** (tắt mặc định).
+- Các làn xếp thành một thanh **dưới** (hoặc **trên**) chart, thẳng hàng với trục thời gian của nến, nên nhìn thấy nến đang nằm ở phần nào của từng chu kỳ. Ô hiện tại có viền nổi; có chú giải, tên làn, tên đầy đủ khi ô đủ rộng. Chỉnh được cỡ thanh, độ mờ, viền, nền, màu A/M/D/X và bật/tắt từng chu kỳ.
+- Mọi mốc theo giờ New York (server = New York + 7 giờ). "Bây giờ" là nến cuối của chart nên đúng cả khi Replay.
+
+Khác bản Pine: vẽ thành thanh trên chart thay vì mở pane riêng (cùng trục thời gian nên cuộn/zoom đồng bộ); tuần bắt đầu đúng 00:00 thứ Hai (bản Pine giữ nguyên giờ trong ngày); ngày giao dịch tính từ 18:00 nên sau 18:00 vẫn thấy ô đang chạy; tắt "chu kỳ lịch sử" vẫn giữ tháng trước để luôn thấy ô tháng hiện tại.
