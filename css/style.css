@@ -279,3 +279,9 @@ a.sb{text-decoration:none}
 #rpM span{position:absolute;bottom:34px;left:6px;padding:2px 8px;border-radius:8px;background:var(--hole);border:1px solid var(--c3);color:var(--c3);font-size:11.5px;font-weight:700;white-space:nowrap}
 @media(max-width:560px){#rpT{top:40px;padding:6px 8px}#rpT .rb{width:32px}#rpT .rb.pp{width:38px}#rpT .rps{margin:0 3px}#rpT .rb.t span{display:none}}
 @media(prefers-reduced-motion:reduce){#rpT.busy::after{animation:none}}
+
+/* Bảng thống kê Killzones & Pivots (js/killzones.js) */
+#kzTbl{position:absolute;z-index:4;display:none;background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden;font-variant-numeric:tabular-nums;color:var(--ink);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+#kzTbl table{border-collapse:collapse}
+#kzTbl td{padding:2px 7px;text-align:center;border:1px solid var(--line);white-space:nowrap;line-height:1.25}
+@media (max-width:700px){#kzTbl{max-width:92%;overflow-x:auto}}
