@@ -197,3 +197,69 @@ IND.kz={
   L:["KZ1","KZ2","KZ3","KZ4","KZ5","KZ6","Day (D)","Week (W)","Month (M)","Giá mở cửa mặc định","Timestamp mặc định"],
   lab:()=>"",f:()=>[]
 };
+
+/* ===== Goldbach Levels (Trifecta): PO3 dealing range với các level [03]..[97], nhiều range, fractal, mini map, PO3 tự chọn theo khung giờ =====
+   Port từ Pine Script "Goldbach Trifecta Style" (MPL-2.0). Kiểu "of": phần tính + vẽ nằm ở js/goldbach.js. Màu: HL, Liquidity, GIP, Flow, Rebalance, Fractal, Level giữa. */
+const GBO=["3","9","27","81","243","729","2187","6561","19683","59049","177147","531441"],GBS=GBO.map(v=>[v,v]),GBL=["Tiny","Small","Normal","Large"];
+IND.gb={
+  n:"Goldbach Levels (Trifecta)",t:"of",ver:1,
+  d:"Chia giá thành các PO3 dealing range (3, 9, 27, 81, 243...) và vẽ các level Goldbach [03] [11] [17] [23] ... [97] của range chứa giá, kèm nhiều range chồng lên trên và dưới. Nhóm màu: Liquidity (03, 11, 89, 97), GIP (17, 83), Flow (23-35, 65-77), Rebalance (41-59). Có Fractal Fib (range con = PO3/3), Mini Map, vùng tô OB/LV/EQ, và PO3 tự chọn theo khung giờ đang xem.",
+  p:[["po3","PO3","81","s",{g:"PO3 Dealing Range",mn:1,o:GBS,on:p=>!p.aut,tt:"Độ rộng range tính theo đơn vị giá sau khi nhân Decimate. Vàng/chỉ số thường dùng 81 đến 729 (Decimate 1); Forex dùng Decimate 10000."}],
+     ["dec","Decimate (0 = tự động)",0,"n",{min:0,step:1,tt:"Giá được nhân với số này trước khi áp lưới PO3. 0 = tự đoán: Forex 10000, cặp JPY 100, còn lại 1."}],
+     ["nr","Số range mở rộng",2,"i",{mn:1,min:0,max:5,tt:"Số range vẽ thêm phía trên và phía dưới range chính."}],
+     ["upd","Cập nhật mỗi tick",false,"b",{tt:"Bật: range căn lại theo từng tick. Tắt: chỉ căn lại khi nến đóng (dùng giá đóng cửa của nến trước)."}],
+     ["ffib","Fractal Fib",false,"b",{g:"Fractals",tt:"Vẽ range con (PO3 / 3) chứa giá, có đủ level riêng."}],
+     ["hmain","Ẩn level chính",false,"b",{tt:"Ẩn các level [03]..[97] của range, chỉ giữ High/Low của range."}],
+     ["mids","Level giữa",false,"b",{tt:"Thêm đường chấm ở giữa mỗi cặp level kề nhau."}],
+     ["mm","Bật Mini Map",false,"b",{g:"Mini Map",tt:"Cột range thu nhỏ đặt bên phải nến cuối, thấy cả các range lân cận."}],
+     ["mms","Tự cuộn theo nến cuối",true,"b",{on:p=>p.mm,tt:"Bật: mini map đi theo nến cuối. Tắt: ghim ở mép trái vùng đang xem."}],
+     ["mmx","Vị trí X (số nến)",20,"i",{min:0,max:200,on:p=>p.mm}],
+     ["mmb","Độ rộng (số nến)",40,"i",{min:5,max:200,on:p=>p.mm}],
+     ["aut","Tự chọn PO3 theo khung giờ",false,"b",{g:"PO3 tự động",mn:1,tt:"Chọn PO3 theo khung giờ của chart bằng bảng bên dưới."}],
+     ["aY","Năm","6561","s",{o:GBS,on:p=>p.aut}],["aQ","Quý","6561","s",{o:GBS,on:p=>p.aut}],["aMo","Tháng","6561","s",{o:GBS,on:p=>p.aut}],
+     ["aW","Tuần","2187","s",{o:GBS,on:p=>p.aut}],["aD","Ngày","729","s",{o:GBS,on:p=>p.aut}],["a4","H4","729","s",{o:GBS,on:p=>p.aut}],
+     ["a1h","H1","243","s",{o:GBS,on:p=>p.aut}],["a15","M15 / M30","81","s",{o:GBS,on:p=>p.aut}],["a3","M3 / M5 / M9","27","s",{o:GBS,on:p=>p.aut}],["a1","M1","27","s",{o:GBS,on:p=>p.aut}],
+     ["shift","Dịch range",0,"n",{g:"Cơ bản",step:0.1,tt:"Dịch lưới PO3 theo tỉ lệ của một range (0.5 = nửa range)."}],
+     ["uh","Dùng giá lịch sử",false,"b",{tt:"Dựng range quanh giá bên dưới thay vì giá hiện tại."}],
+     ["hp","Giá lịch sử",0,"n",{min:0,on:p=>p.uh}],
+     ["lbl","Hiện nhãn",true,"b",{g:"Kiểu dáng"}],
+     ["eq","Hiện EQ [50]",true,"b"],
+     ["ext","Kéo đường sang phải",false,"b",{tt:"Tắt: đường dừng ở nến cuối, nhãn ngay sau đó. Bật: đường chạy hết chart, nhãn sát trục giá."}],
+     ["lo","Khoảng cách nhãn (nến)",1,"i",{min:0,max:50,on:p=>!p.ext}],
+     ["lsz","Cỡ chữ nhãn","Small","s",{o:GBL,on:p=>p.lbl}],
+     ["lw","Độ dày level",1,"i",{min:1,max:4}],
+     ["hw","Độ dày High/Low",2,"i",{min:1,max:5}],
+     ["sg","Kiểu đường GIP [17/83]","Dotted","s",{o:KZ_STY}],
+     ["sl","Kiểu đường LV [23/77]","Dotted","s",{o:KZ_STY}],
+     ["se","Kiểu đường EQ [50]","Dotted","s",{o:KZ_STY,on:p=>p.eq}],
+     ["fob","Tô vùng OB [03-11 / 89-97]",true,"b"],
+     ["flv","Tô vùng LV/BR [23-35 / 65-77]",false,"b"],
+     ["feq","Tô vùng EQ [41-59]",false,"b"],
+     ["zop","Độ mờ vùng tô",0.1,"n",{min:0.02,max:0.6,step:0.02,on:p=>p.fob||p.flv||p.feq}],
+     ["info","Hiện bảng thông tin",true,"b"]],
+  c:["#98a2d8","#26c882","#ffb02e","#35b6ff","#ff5c8a","#b388ff","#98a2d8"],
+  L:["Range High/Low","Liquidity [03,11,89,97]","GIP [17,83]","Flow [23-35,65-77]","Rebalance [41-59]","Fractal","Level giữa"],
+  lab:p=>"PO3 "+(p.aut?"auto":p.po3),f:()=>[]
+};
+
+/* ===== Quarterly Theory [QT]: chu kỳ A-M-D-X của Năm, Tháng, Tuần, Ngày, 90 phút, 22.5 phút, vẽ thành thanh các làn thẳng hàng với trục thời gian =====
+   Port từ Pine Script "Quarterly Theory [QT]" (MPL-2.0). Kiểu "of": phần tính + vẽ nằm ở js/qt.js. Mọi mốc theo giờ New York. */
+IND.qt={
+  n:"Quarterly Theory [QT]",t:"of",ver:1,
+  d:"Mỗi chu kỳ chia 4 phần: A (Accumulation), M (Manipulation), D (Distribution), X (Reversal / Continuation). Gồm chu kỳ Năm (quý), Tháng (4 tuần theo thứ Hai), Tuần (Thứ 2 đến Thứ 5), Ngày (4 khối 6 giờ từ 18:00 New York), 90 phút và 22.5 phút. Các làn nằm thành một thanh trên chart, thẳng hàng với nến nên thấy ngay nến đang ở phần nào của từng chu kỳ; ô hiện tại có viền nổi.",
+  p:[["pos","Vị trí thanh","bot","s",{g:"Hiển thị",mn:1,o:[["bot","Dưới chart"],["top","Trên chart"]]}],
+     ["hist","Hiện chu kỳ lịch sử",true,"b",{mn:1,tt:"Tắt: chỉ giữ chu kỳ hiện tại (và tháng trước để luôn thấy ô đang chạy của chu kỳ Tháng)."}],
+     ["size","Cỡ thanh (×)",1,"n",{min:0.5,max:3,step:0.1}],
+     ["lbl","Hiện chữ A / M / D / X",true,"b"],
+     ["full","Tên đầy đủ khi ô đủ rộng",true,"b",{on:p=>p.lbl}],
+     ["brd","Viền ô",true,"b"],
+     ["bg","Nền thanh",true,"b"],
+     ["leg","Hiện chú giải",true,"b"],
+     ["now","Viền ô hiện tại",true,"b"],
+     ["op","Độ mờ ô",0.45,"n",{min:0.1,max:1,step:0.05}],
+     ["cy","Chu kỳ Năm",true,"b",{g:"Chu kỳ"}],["cmo","Chu kỳ Tháng",true,"b"],["cw","Chu kỳ Tuần",true,"b"],["cd","Chu kỳ Ngày",true,"b"],
+     ["c90","Chu kỳ 90 phút",true,"b"],["cmc","Chu kỳ 22.5 phút",false,"b"]],
+  c:["#98a2d8","#ff5c8a","#26c882","#35b6ff"],
+  L:["A (Accumulation)","M (Manipulation)","D (Distribution)","X (Reversal/Cont)"],
+  lab:()=>"",f:()=>[]
+};
