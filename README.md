@@ -28,9 +28,10 @@ Sửa `js/indicators-custom.js` (đã có sẵn một mẫu `IND.mine` và hư�
 - `js/orderflow-absorption.js`: Heavy Absorption (tính ngưỡng + vẽ marker); khai báo thông số ở cuối `js/indicators-custom.js` (`IND.hab`)
 - `js/orderflow-dom.js`: DOM / MBO (kênh depth cTrader, bảng bên phải + histogram thanh khoản ở mép phải chart); khai báo thông số ở cuối `js/indicators-custom.js` (`IND.dom`)
 - `js/hvn-profile.js`: HVN Profile (tính cụm HVN + vẽ canvas); khai báo thông số ở cuối `js/indicators-custom.js` (`IND.hvn`)
+- `js/killzones.js`: Killzones & Pivots (tính phiên/pivot/level/D-W-M + vẽ canvas + bảng thống kê); khai báo thông số ở cuối `js/indicators-custom.js` (`IND.kz`)
 - `js/replay.js`: Replay để backtest (thanh điều khiển nổi, cắt/nối lại mảng `m1`); `RP` và `RPLIM()` khai báo ở đầu `js/chart.js`
 - `js/drawings-*.js`, `js/mobile.js`: công cụ vẽ và cử chỉ cảm ứng
-- `tests/`: `node tests/footprint.test.js`, `node tests/customtf.test.js`, `node tests/hvn.test.js`, `node tests/hab.test.js`, `node tests/dom.test.js`, `node tests/replay.test.js`
+- `tests/`: `node tests/footprint.test.js`, `node tests/customtf.test.js`, `node tests/hvn.test.js`, `node tests/hab.test.js`, `node tests/dom.test.js`, `node tests/replay.test.js`, `node tests/killzones.test.js`
 
 ## Replay (backtest)
 
@@ -92,3 +93,17 @@ Thêm ở mục **Indicator** → **DOM / MBO** (nhóm Orderflow). Đăng ký k�
 - **Heatmap lịch sử (tuỳ chọn, mặc định tắt)**: chụp sổ lệnh mỗi giây, tô nền chart theo size từng mức giá theo thời gian (đậm = dày; xanh Bid, đỏ Ask), kiểu Bookmap. Giữ 2–240 phút gần nhất trong bộ nhớ, đổi mã hoặc đổi mức gộp giá thì xoá lịch sử.
 
 Giới hạn: với forex/CFD đây là thanh khoản tổng hợp do broker báo, không phải sổ lệnh tập trung như CME; giảm size không phân biệt được rút lệnh hay bị khớp; không có lịch sử depth từ trước (heatmap chỉ có từ lúc bật indicator và mất khi tải lại trang). Một số broker không bật depth, khi đó bảng báo lỗi đăng ký.
+
+## Killzones & Pivots
+
+Thêm ở mục **Indicator** → **Killzones & Pivots** (nhóm Orderflow). Port từ Pine Script "ICT Killzones & Pivots [TFO]" của tradeforopp (MPL-2.0) sang JS cho chart này. Chỉ vẽ trên khung từ M1 đến mức **Giới hạn khung giờ** (mặc định M30).
+
+- **Killzones**: 6 phiên (ASIA 2000-0000, LNDN 0200-0500, NYAM 0930-1100, NYL 1200-1300 tắt, NYPM 1330-1600, RTH 0930-1600 tắt). Mỗi phiên tự đặt bật/tắt, tên, giờ `HHMM-HHMM` (qua nửa đêm được) và màu (tab Kiểu dáng). Giờ tính theo **Múi giờ** ở mục Toàn cục, mặc định America/New_York tự đổi giờ mùa; GMT±N là cố định.
+- **Pivots**: High/Low của phiên kéo sang phải *đến khi bị phá* hoặc *qua cả điểm bị phá*, cho phiên gần nhất hoặc tất cả (đến khi bị Giới hạn số phiên loại). Có midpoint, nhãn (cuối hoặc đầu đường) và báo khi nến đang chạy phá pivot.
+- **Range Levels** (mặc định tắt): giá mở cửa phiên ± hệ số × range trung bình / trung vị / độ lệch chuẩn của N phiên gần nhất. Nhập hệ số mỗi dòng một mức, tuỳ chọn màu (`1.5, purple`), dòng bắt đầu bằng `//` bị bỏ qua.
+- **Ngày - Tuần - Tháng**: open, high/low/mid của kỳ trước, đường chia, nhãn thứ trong tuần. Ngày/tuần theo giờ server của app (cắt 17:00 New York). Nhãn trùng giá được gộp (vd. `D OPEN / W OPEN`).
+- **Giá mở cửa theo giờ** và **Timestamp** (đường dọc): nhập mỗi dòng `giờ, màu, nhãn`. Giá mở cửa lấy từ nến M1 đúng phút đó nên đúng cả khi xem khung lớn hơn M1.
+- **Bảng dữ liệu**: range hiện tại so với số đo, hit rate High/Low từng killzone, hit rate từng range level (trên/dưới), hit rate PD/PW/PM. Rê chuột lên ô để xem các lần gần nhất (🟩 trúng, 🟥 trượt); ô tô màu nghĩa là đã xảy ra ở phiên hiện tại. Vị trí và cỡ chữ chỉnh được.
+- **Cutoff** (tuỳ chọn): pivot, midpoint, đường giá mở cửa và range level ngừng kéo dài ở giờ này; pivot bị phá lần đầu sau giờ cắt tính là trượt.
+
+Khác bản Pine: tooltip trên nhãn trên chart được thay bằng tooltip của bảng; không có `alert()` của TradingView nên cảnh báo hiện ở thanh trạng thái kèm tiếng bíp. Khi replay, indicator chỉ thấy dữ liệu tới điểm đang xem. Hộp thoại cài đặt có thêm ô nhập chữ (`t`) và nhiều dòng (`ta`) cho các thông số dạng văn bản.
