@@ -2,7 +2,7 @@ const fs=require('fs'),vm=require('vm'),assert=require('assert'),path=require('p
 const J=path.join(__dirname,'..','js')+'/';
 const full=fs.readFileSync(J+'orderflow-absorption.js','utf8'),pure=full.split('/* ===== vẽ ===== */')[0];
 const strip=s=>s.replace(/\bconst (\w+)=/g,'var $1=');
-const ctx={Math,Float64Array,Number,Array,Map,Set,isFinite,Infinity};vm.createContext(ctx);
+const ctx={Math,Float64Array,Number,Array,Map,Set,isFinite,Infinity,RPLIM:()=>Infinity};vm.createContext(ctx);
 vm.runInContext("var FPU=1e5,fpSI=step=>Math.max(1,Math.round(step*FPU));var fpQ=(p,step)=>Math.floor(Math.round(p*FPU)/fpSI(step));",ctx);
 vm.runInContext(strip(pure),ctx);
 let n=0;const ok=x=>console.log('ok  ',x)||n++;const run=c=>vm.runInContext(c,ctx);
@@ -114,7 +114,7 @@ assert.strictEqual(run('haHvn(Z,2000,100.9,101.1,99,1,0.25).poc'),true);ok('haHv
 assert(run('haHvn(Z,2000,102.1,102.4,99,1,0.25)')!==null&&run('haHvn(Z,2000,102.3,102.6,99,1,0.1)')===null);ok('haHvn: dung sai quanh vùng');
 
 // ---------- chạy end-to-end haRun / drawHAB với dữ liệu giả ----------
-const ctx2={Math,Float64Array,Number,Array,Map,Set,isFinite,Infinity,console,Date,window:{}};vm.createContext(ctx2);
+const ctx2={Math,Float64Array,Number,Array,Map,Set,isFinite,Infinity,RPLIM:()=>Infinity,console,Date,window:{}};vm.createContext(ctx2);
 const rs=(c,s)=>vm.runInContext(c,ctx2);
 rs(`var FPU=1e5,fpSI=step=>Math.max(1,Math.round(step*FPU));var fpQ=(p,step)=>Math.floor(Math.round(p*FPU)/fpSI(step));
  var C={sym:'X',tf:60},FPH=1,FPLV=1,FPM=new Map(),m1=[],agg=[],HVZ=[],ACT=[],fpLast=0,statusMsg=[];

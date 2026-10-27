@@ -3,7 +3,7 @@ const J=require('path').join(__dirname,'..','js')+'/';
 function load(){
   const ctx={console,performance,Math,Date,JSON,Promise,Map,Set,setTimeout,clearTimeout,setInterval:()=>0,clearInterval(){},
     $:()=>({}),ld:(k,d)=>d,sv(){},C:{tf:900,sym:'X',days:2},agg:[],m1:[],ACT:[],status(){},u2s:u=>u,s2u:u=>u,
-    FPM:new Map(),window:{},dl:(a)=>a,devicePixelRatio:1,document:{getElementById:()=>({})},FPD:undefined};
+    FPM:new Map(),RPLIM:()=>Infinity,window:{},dl:(a)=>a,devicePixelRatio:1,document:{getElementById:()=>({})},FPD:undefined};
   vm.createContext(ctx);
   // ctrader.js dùng FPM/FPV...: khai báo như app
   vm.runInContext(fs.readFileSync(J+'ctrader.js','utf8').replace(/\bconst (\w+)=/g,'var $1=').replace(/^let /gm,'var '),ctx);
