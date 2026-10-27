@@ -5,12 +5,15 @@ const pshow=(sp,p)=>!(sp[4]&&sp[4].on)||sp[4].on(p);
 function pin(sp,val,pre,st){
   const k=sp[0],ty=sp[3]||"n",o=sp[4]||{},id=pre+k;
   if(ty==="b")return`<input type="checkbox" id="${id}" data-p="${k}"${val?" checked":""}>`;
+  if(ty==="t")return`<input type="text" id="${id}" data-p="${k}" value="${String(val==null?"":val).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;")}" autocomplete="off" spellcheck="false"${st?` style="${st}"`:""}>`;
+  if(ty==="ta")return`<textarea id="${id}" data-p="${k}" rows="${o.rows||5}" autocomplete="off" spellcheck="false" style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px">${String(val==null?"":val).replace(/&/g,"&amp;").replace(/</g,"&lt;")}</textarea>`;
   if(ty==="s")return`<select id="${id}" data-p="${k}"${st?` style="${st}"`:""}>${opts(o.o).map(([v,t])=>`<option value="${v}"${v===val?" selected":""}>${t}</option>`).join("")}</select>`;
   return`<input type="number" step="${o.step||(ty==="i"?1:"any")}"${o.min!==undefined?` min="${o.min}"`:""}${o.max!==undefined?` max="${o.max}"`:""} id="${id}" data-p="${k}" value="${val}"${st?` style="${st}"`:""}>`}
 function setP(a,d,k,t){
   const sp=d.p.find(x=>x[0]===k);if(!sp)return;const ty=sp[3]||"n",o=sp[4]||{};let v;
   if(ty==="b")v=!!t.checked;
   else if(ty==="s")v=t.value;
+  else if(ty==="t"||ty==="ta")v=String(t.value);
   else{v=parseFloat(t.value);const mn=o.min!==undefined?o.min:1e-9;if(!isFinite(v)||v<mn)v=sp[2];if(o.max!==undefined&&v>o.max)v=o.max;if(ty==="i")v=Math.round(v);t.value=v}
   a.p[k]=v}
 /* NHỚ cài đặt theo từng loại indicator: thông số, màu, độ dày. Thêm lại indicator (sau khi xóa hoặc tải lại trang) sẽ dùng lại bộ cài đặt đã chỉnh gần nhất. Nút "Mặc định" trong hộp thoại vẫn đưa về mặc định gốc. */
