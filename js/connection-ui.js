@@ -21,6 +21,20 @@ $("cSave").onclick=async()=>{
   finally{$("cSave").disabled=false}
 };
 $("cClear").onclick=()=>{ctClose();ctClearCfg();fillConn();for(const id of Object.keys(FIELDS))if(id!=="cEnv")$(id).value="";$("cEnv").value="auto";cMsg("Đã xoá key khỏi trình duyệt này.")};
+/* Xoá cache của web: ép trình duyệt tải lại từng file của trang (cache:"reload" ghi đè bản cũ trong HTTP cache), xoá Cache Storage + Service Worker, rồi tải lại.
+   Không đụng localStorage nên key cTrader và cài đặt vẫn còn. */
+$("cacheClr").onclick=async()=>{
+  const b=$("cacheClr"),m=$("cacheMsg");b.disabled=true;m.textContent="Đang xoá cache…";
+  try{
+    try{if(window.caches)for(const k of await caches.keys())await caches.delete(k)}catch{}
+    try{if(navigator.serviceWorker)for(const r of await navigator.serviceWorker.getRegistrations())await r.unregister()}catch{}
+    const u=new Set([location.pathname+location.search,location.href.split("#")[0]]);
+    document.querySelectorAll("script[src],link[rel=stylesheet][href],link[rel~=icon][href],img[src]").forEach(e=>{const x=e.src||e.href;if(x&&x.startsWith(location.origin))u.add(x)});
+    await Promise.all([...u].map(x=>fetch(x,{cache:"reload"}).catch(()=>{})));
+    m.textContent="Xong, đang tải lại trang…";
+    setTimeout(()=>{const q=new URL(location.href);q.searchParams.set("_",Date.now());q.hash="#conn";location.replace(q.toString())},300);
+  }catch(e){m.textContent="Không xoá được: "+(e&&e.message||e);b.disabled=false}
+};
 document.querySelectorAll("[data-show]").forEach(b=>b.onclick=()=>{const i=$(b.dataset.show),h=i.type==="password";i.type=h?"text":"password";b.textContent=h?"Ẩn":"Hiện"});
 
 /* ================= GIAO DIỆN: sidebar, theme, bầu trời sao ================= */
