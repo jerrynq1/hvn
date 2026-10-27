@@ -60,6 +60,11 @@
     <div class="kv"><select id="cEnv"><option value="auto">Tự nhận (theo tài khoản)</option><option value="live">Live</option><option value="demo">Demo</option></select></div>
     <div class="bar" style="margin-top:14px"><button class="btn" id="cSave" type="button">Lưu &amp; kết nối</button><button class="btn ghost" id="cClear" type="button">Xoá key</button><span class="msg" id="cMsg"></span></div>
   </div>
+  <div class="card" id="cacheCard" style="max-width:560px;margin-top:14px">
+    <h2>Xoá cache của web</h2>
+    <p class="msg" style="margin:0 0 6px">Dùng khi vừa cập nhật source mà trang vẫn chạy bản cũ (ví dụ chưa thấy nút Replay). Nút này tải lại toàn bộ file của trang (JS, CSS, HTML), xoá Cache Storage và Service Worker rồi tải lại trang. Key cTrader, mã, khung giờ, indicator và các cài đặt khác được giữ nguyên.</p>
+    <div class="bar"><button class="btn ghost" id="cacheClr" type="button">Xoá cache &amp; tải lại</button><span class="msg" id="cacheMsg"></span></div>
+  </div>
 </section>
 
 </div></div>
