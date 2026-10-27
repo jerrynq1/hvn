@@ -28,8 +28,27 @@ Sửa `js/indicators-custom.js` (đã có sẵn một mẫu `IND.mine` và hư�
 - `js/orderflow-absorption.js`: Heavy Absorption (tính ngưỡng + vẽ marker); khai báo thông số ở cuối `js/indicators-custom.js` (`IND.hab`)
 - `js/orderflow-dom.js`: DOM / MBO (kênh depth cTrader, bảng bên phải + histogram thanh khoản ở mép phải chart); khai báo thông số ở cuối `js/indicators-custom.js` (`IND.dom`)
 - `js/hvn-profile.js`: HVN Profile (tính cụm HVN + vẽ canvas); khai báo thông số ở cuối `js/indicators-custom.js` (`IND.hvn`)
+- `js/replay.js`: Replay để backtest (thanh điều khiển nổi, cắt/nối lại mảng `m1`); `RP` và `RPLIM()` khai báo ở đầu `js/chart.js`
 - `js/drawings-*.js`, `js/mobile.js`: công cụ vẽ và cử chỉ cảm ứng
-- `tests/`: `node tests/footprint.test.js`, `node tests/customtf.test.js`, `node tests/hvn.test.js`, `node tests/hab.test.js`, `node tests/dom.test.js`
+- `tests/`: `node tests/footprint.test.js`, `node tests/customtf.test.js`, `node tests/hvn.test.js`, `node tests/hab.test.js`, `node tests/dom.test.js`, `node tests/replay.test.js`
+
+## Replay (backtest)
+
+Bấm **Replay** trên thanh chart, rồi chọn điểm bắt đầu: bấm vào một nến (rê chuột thấy đường cắt, phần bên phải bị làm mờ), hoặc dùng **Chọn nhanh…** (1 giờ … 1 tháng trước, đầu ngày hôm nay), **Chọn ngày**, **Ngẫu nhiên**. Chart chỉ còn quá khứ tới điểm đó; nến và mọi indicator được dựng lại như thật, không nhìn trộm tương lai.
+
+| Nút / phím | Việc làm |
+|---|---|
+| ⏮ | Về điểm bắt đầu backtest |
+| ◀| / |▶ (Shift+← / Shift+→) | Lùi / tiến 1 bước |
+| ▶ / ⏸ (Shift+↓) | Phát / tạm dừng |
+| ⏭ | Tua tới nến cuối có dữ liệu |
+| Thanh tua | Kéo tới bất kỳ thời điểm nào; nhãn hiện giờ tại con trượt, cờ xanh là điểm bắt đầu |
+| 0.1x … 120x | Số lần cập nhật mỗi giây |
+| Mỗi nến … / Mỗi phút | Mỗi bước chạy hết 1 nến của khung đang xem hoặc 1 nến M1 |
+| ✂ | Chọn lại điểm bắt đầu |
+| ✕ | Thoát, về chart trực tiếp (tự bù nến mới) |
+
+Thanh điều khiển kéo được bằng tay nắm bên trái. Có thể đổi khung giờ (từ M1 trở lên) và bật/tắt indicator trong lúc replay. Không giới hạn số ngày lùi: chọn mốc cũ hơn dữ liệu đã tải thì replay tự tải thêm M1 (tới khi broker hết dữ liệu); **Chọn nhanh → Đầu dữ liệu đã tải** về đúng đầu phần đã có. Giới hạn: không dùng khung giây; giá live bị tạm dừng; DOM/MBO là dữ liệu live nên không có ý nghĩa khi replay; tick footprint chỉ tải trong `FP_MAXD` ngày gần nhất.
 
 ## HVN Profile (v2)
 
@@ -73,7 +92,3 @@ Thêm ở mục **Indicator** → **DOM / MBO** (nhóm Orderflow). Đăng ký k�
 - **Heatmap lịch sử (tuỳ chọn, mặc định tắt)**: chụp sổ lệnh mỗi giây, tô nền chart theo size từng mức giá theo thời gian (đậm = dày; xanh Bid, đỏ Ask), kiểu Bookmap. Giữ 2–240 phút gần nhất trong bộ nhớ, đổi mã hoặc đổi mức gộp giá thì xoá lịch sử.
 
 Giới hạn: với forex/CFD đây là thanh khoản tổng hợp do broker báo, không phải sổ lệnh tập trung như CME; giảm size không phân biệt được rút lệnh hay bị khớp; không có lịch sử depth từ trước (heatmap chỉ có từ lúc bật indicator và mất khi tải lại trang). Một số broker không bật depth, khi đó bảng báo lỗi đăng ký.
-
-## Bar Replay (manual backtesting)
-
-The chart view includes a Replay button and a Bar Replay panel. Replay uses the historical candles already loaded into the chart and provides play/pause, one-bar back/forward, jump to first/last loaded bar, playback speed, a draggable timeline, date/time jump, and click-on-chart selection. While replay is active, the main candlestick/volume chart and indicator calculations are limited to candles up to the selected replay index to reduce future-bar leakage. The browser continues receiving live data in the background; exit Replay to return to the latest chart. Historical range is limited to data actually loaded from cTrader, so connect cTrader and load/scroll historical candles before selecting an older period.

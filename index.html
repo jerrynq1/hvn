@@ -27,20 +27,13 @@
     <div class="symw"><input id="sym" title="Chọn mã giao dịch" aria-label="Mã" role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="symDd" autocomplete="off" autocapitalize="characters" spellcheck="false"><svg class="chev" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 8l5 5 5-5"/></svg></div>
     <div class="tfs" id="tfs"></div>
     <span class="pill" id="st">Chưa kết nối</span>
-    <button class="btn ghost sm" data-go="ind">ƒx Indicator</button><button class="btn ghost sm" data-go="cs">🎨 Màu nến</button><button class="btn sm replay-launch" id="replayToggle" type="button">▶ Replay</button>
+    <button class="btn ghost sm" data-go="ind">ƒx Indicator</button><button class="btn ghost sm" data-go="cs">🎨 Màu nến</button><button class="btn ghost sm" id="rpB" type="button" aria-pressed="false" title="Replay: xem lại giá chạy để backtest"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 6 4 12l7 6z"/><path d="M20 6l-7 6 7 6z"/></svg>Replay</button>
 <div class="px"><span><small>Bid</small><b id="bid">–</b></span><span><small>Ask</small><b id="ask">–</b></span></div>
   </div>
   <div class="card" id="chartCard"><div id="ohlc"></div><div id="legend"></div><div id="cw"><div id="chart"></div><div id="panes"></div></div>
     <div id="clk"><button type="button" id="clkB" aria-haspopup="dialog" aria-expanded="false" title="Đổi múi giờ hiển thị"><span id="clkT">--:--:--</span><small id="clkZ"></small><span aria-hidden="true">▾</span></button></div>
     <div id="tzp" role="dialog" aria-label="Múi giờ"></div>
   </div>
-  <section class="card replay-panel" id="replayPanel" aria-label="Replay System" hidden>
-    <div class="replay-head"><div><span class="replay-kicker">BACKTEST WORKSPACE</span><h2>Bar Replay <span class="replay-live" id="replayState">Sẵn sàng</span></h2></div><button class="btn ghost sm" id="replayClose" type="button">Đóng ×</button></div>
-    <div class="replay-controls"><button class="btn ghost replay-icon" id="rpStart" title="Về nến đầu">|◀</button><button class="btn ghost replay-icon" id="rpBack" title="Lùi một nến">◀</button><button class="btn replay-play" id="rpPlay" title="Phát / Tạm dừng">▶ Phát</button><button class="btn ghost replay-icon" id="rpNext" title="Tiến một nến">▶</button><button class="btn ghost replay-icon" id="rpEnd" title="Đến nến cuối">▶|</button><label class="replay-speed">Tốc độ<select id="rpSpeed"><option value="2500">0.25×</option><option value="1200">0.5×</option><option value="650" selected>1×</option><option value="320">2×</option><option value="150">4×</option></select></label></div>
-    <div class="replay-jump"><label for="rpDate">Thời điểm bắt đầu / Go to</label><input id="rpDate" type="datetime-local"><button class="btn ghost" id="rpGo" type="button">Go to</button><button class="btn ghost" id="rpPick" type="button">Chọn trên chart</button></div>
-    <div class="replay-timeline"><div class="replay-times"><span id="rpFrom">—</span><b id="rpCurrent">Chưa bắt đầu</b><span id="rpTo">—</span></div><input id="rpRange" type="range" min="0" max="0" value="0" step="1" aria-label="Timeline replay"><div class="replay-range-labels"><span>START</span><span id="rpProgress">0 / 0 nến</span><span>END</span></div></div>
-    <div class="replay-foot"><span><i class="replay-dot"></i><span id="rpInfo">Tải dữ liệu lịch sử bằng cách kết nối cTrader.</span></span><span>Replay chỉ hiển thị nến đến thời điểm đang phát.</span></div>
-  </section>
 </section>
 
 <section class="view" id="v-ind">
@@ -76,7 +69,6 @@
 <script src="js/timezone.js"></script>
 <script src="js/ctrader.js"></script>
 <script src="js/chart.js"></script>
-<script src="js/replay.js"></script>
 <script src="js/candle-style.js"></script>
 <script src="js/indicators-defs.js"></script>
 <script src="js/indicators-custom.js"></script>
@@ -93,5 +85,6 @@
 <script src="js/orderflow-dom.js"></script>
 <script src="js/drawings-interact.js"></script>
 <script src="js/mobile.js"></script>
+<script src="js/replay.js"></script>
 </body>
 </html>
